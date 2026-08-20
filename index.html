@@ -33,7 +33,7 @@
   <link rel="stylesheet" href="/public/css/dark.css">
 
   <style>
-    /* 로딩 박스 기본 숨김 및 활성화 시 flex 중앙 정렬 */
+    /* 로딩 박스 스타일 */
     .loading-box {
       display: none;
       flex-direction: column;
@@ -56,6 +56,7 @@
       font-size: 1.05rem;
       margin: 0;
     }
+
     /* 보관함 카드 스타일 */
     .storage-card-item {
       background: #ffffff;
@@ -68,6 +69,99 @@
     }
     .storage-card-item:hover {
       transform: translateY(-2px);
+    }
+
+    /* 🎬 유튜브 추천 영상 카드 그리드 디자인 */
+    .youtube-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .yt-item-card {
+      background: #ffffff;
+      border: 3px solid #222222;
+      border-radius: 18px;
+      padding: 20px 18px;
+      box-shadow: 6px 6px 0px #222222;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      background: linear-gradient(180deg, #ffffff 0%, #fffbfd 100%);
+    }
+
+    .yt-item-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 8px 8px 0px #ff4d8d;
+      border-color: #ff4d8d;
+    }
+
+    .yt-header-badge {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .yt-tag {
+      font-size: 0.78rem;
+      font-weight: 800;
+      background: #ffecf5;
+      color: #ff4d8d;
+      border: 2px solid #ffb3d9;
+      border-radius: 20px;
+      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .yt-number {
+      font-weight: 900;
+      font-size: 0.85rem;
+      color: #7928ca;
+    }
+
+    .yt-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #222222;
+      line-height: 1.4;
+      margin: 0 0 18px 0;
+      word-break: keep-all;
+    }
+
+    .yt-play-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px 14px;
+      background: #ff4d8d;
+      color: #ffffff !important;
+      font-weight: 800;
+      font-size: 0.92rem;
+      text-decoration: none;
+      border: 2.5px solid #222222;
+      border-radius: 12px;
+      box-shadow: 3px 3px 0px #222222;
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .yt-play-btn:hover {
+      background: #ff1a6b;
+      transform: translate(-1px, -1px);
+      box-shadow: 4px 4px 0px #222222;
+    }
+
+    .yt-play-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #222222;
     }
   </style>
 </head>
@@ -219,7 +313,7 @@
           <p class="sub-text">최애의 레전드 직캠과 필수 시청 자체 예능(자컨) 딥링크 모음입니다.</p>
 
           <div id="youtubeVault" class="youtube-list">
-            <div class="empty-state">
+            <div class="empty-state" style="text-align:center; padding:40px 20px; color:#888;">
               <p>아직 생성된 입덕 가이드가 없습니다. <strong>[입덕 가이드 생성]</strong> 탭에서 먼저 영업을 시작해 보세요!</p>
             </div>
           </div>
@@ -269,7 +363,7 @@
             });
         }
 
-        // 2. 마크다운 정제
+        // 2. 마크다운 정제 함수
         function purifyMarkdown(raw) {
             if (!raw) return '';
             let text = raw.split('[YOUTUBE:')[0].trim();
@@ -282,7 +376,7 @@
             return text;
         }
 
-        // 3. 유튜브 키워드 파싱
+        // 3. 예쁜 유튜브 카드 렌더링
         function renderYoutube(biasName, rawText) {
             if (!youtubeVault) return;
             let keywords = [];
@@ -299,15 +393,18 @@
                 keywords = [`${target} 레전드 무대 직캠`, `${target} 자체콘텐츠 킬링파트`, `${target} 입덕 영상 모음`];
             }
 
+            const icons = ['🔥', '🎬', '🧁', '✨', '💿'];
+
             youtubeVault.innerHTML = `
               <div class="youtube-grid">
-                ${keywords.map(kw => `
+                ${keywords.map((kw, i) => `
                   <div class="yt-item-card">
-                    <div class="yt-info">
-                      <span class="yt-tag">🎬 추천 검색 영상</span>
-                      <h4 class="yt-title">${kw}</h4>
+                    <div class="yt-header-badge">
+                      <span class="yt-tag">💿 추천 킬링영상</span>
+                      <span class="yt-number">#0${i + 1}</span>
                     </div>
-                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(kw)}" target="_blank" rel="noopener noreferrer" class="y2k-btn yt-play-btn">
+                    <h4 class="yt-title">${kw}</h4>
+                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(kw)}" target="_blank" rel="noopener noreferrer" class="yt-play-btn">
                       <span>▶️ 유튜브에서 바로보기</span>
                     </a>
                   </div>
@@ -397,7 +494,7 @@
             chip.addEventListener('click', () => chip.classList.toggle('active'));
         });
 
-        // 8. 백서 생성 요청 (에러 방어 및 로딩 자동 복구 완벽 처리)
+        // 8. 백서 생성 요청
         biasForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const biasName = biasNameInput.value.trim();
@@ -429,7 +526,7 @@
                 try {
                     data = JSON.parse(rawResponseText);
                 } catch (parseErr) {
-                    throw new Error('서버 응답 오류 (응답 내용: ' + rawResponseText.slice(0, 100) + ')');
+                    throw new Error('서버 응답 오류: ' + rawResponseText.slice(0, 100));
                 }
 
                 if (!response.ok) {
