@@ -178,12 +178,7 @@
     </footer>
   </div>
 
-  <!-- JavaScript Modules -->
-  <script src="/public/js/theme.js"></script>
-  <script src="/public/js/storage.js"></script>
-  <script src="/public/js/youtube.js"></script>
-
-  <!-- 인라인 렌더링 스크립트 -->
+  <!-- 통합 제어 스크립트 -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
         const tabButtons = document.querySelectorAll('.tab-btn');
@@ -199,12 +194,29 @@
         const saveBtn = document.getElementById('saveBtn');
         const shareLinkBtn = document.getElementById('shareLinkBtn');
         const chipButtons = document.querySelectorAll('.chip');
+        const storageList = document.getElementById('storageList');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const youtubeVault = document.getElementById('youtubeVault');
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
 
         let currentGuide = null;
+        const STORAGE_KEY = 'bias_archive_saved_v1';
 
+        // 1. 테마 토글 기능
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                const isDark = document.body.classList.contains('dark-mode');
+                if (themeIcon) themeIcon.textContent = isDark ? '🌙' : '☀️';
+                if (themeText) themeText.textContent = isDark ? '다크' : '라이트';
+            });
+        }
+
+        // 2. 마크다운 정제 함수
         function purifyMarkdown(raw) {
             if (!raw) return '';
-            
             let text = raw.split('[YOUTUBE:')[0].trim();
             text = text.replace(/^-{3,}$/gm, '<hr style="border:0; border-top:2px dashed #ff99cc; margin:16px 0;">');
             text = text.replace(/^#{1,6}\s*(.*$)/gim, '<div style="font-size:1.15rem; font-weight:800; color:#ff4d8d; margin-top:20px; margin-bottom:8px;">$1</div>');
@@ -212,10 +224,105 @@
             text = text.replace(/^\s*[\*\-]\s*(.*$)/gim, '<div style="margin-left:6px; margin-bottom:6px;">✨ $1</div>');
             text = text.replace(/\*/g, '');
             text = text.replace(/\n/g, '<br>');
-
             return text;
         }
 
+        // 3. 유튜브 키워드 파싱 및 링크 렌더링
+        function renderYoutube(biasName, rawText) {
+            if (!youtubeVault) return;
+            let keywords = [];
+
+            if (rawText && rawText.includes('[YOUTUBE:')) {
+                const match = rawText.match(/\[YOUTUBE:\s*(.*?)\]/);
+                if (match && match[1]) {
+                    keywords = match[1].split(',').map(k => k.trim()).filter(Boolean);
+                }
+            }
+
+            if (keywords.length === 0) {
+                const target = biasName || '아이돌';
+                keywords = [`${target} 레전드 무대 직캠`, `${target} 자체콘텐츠 킬링파트`, `${target} 입덕 영상 모음`];
+            }
+
+            youtubeVault.innerHTML = `
+              <div class="youtube-grid">
+                ${keywords.map(kw => `
+                  <div class="yt-item-card">
+                    <div class="yt-info">
+                      <span class="yt-tag">🎬 추천 검색 영상</span>
+                      <h4 class="yt-title">${kw}</h4>
+                    </div>
+                    <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(kw)}" target="_blank" rel="noopener noreferrer" class="y2k-btn yt-play-btn">
+                      <span>▶️ 유튜브에서 바로보기</span>
+                    </a>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+        }
+
+        // 4. 보관함 불러오기 기능
+        function loadStorage() {
+            if (!storageList) return;
+            const items = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            
+            if (items.length === 0) {
+                storageList.innerHTML = `
+                  <div class="empty-state" style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: #888;">
+                    <p>아직 저장된 입덕 백서가 없습니다. 💖<br><strong>[입덕 가이드 생성]</strong>에서 백서를 만들고 저장해 보세요!</p>
+                  </div>
+                `;
+                return;
+            }
+
+            storageList.innerHTML = items.map((item, idx) => `
+              <div class="y2k-card storage-card" style="margin-bottom: 20px;">
+                <div class="pc-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                  <span class="pc-badge">SAVED #${idx + 1}</span>
+                  <span style="font-weight:800; font-size:1.1rem; color:#ff4d8d;">${item.biasName}</span>
+                </div>
+                <p style="font-size:0.9rem; color:#666; margin-bottom:12px;"><strong>🎯 타겟 취향:</strong> ${item.friendTaste}</p>
+                <div class="pc-body" style="font-size:0.95rem; line-height:1.7; background:#fff; padding:15px; border-radius:12px; border:2px dashed #ffb3d9; margin-bottom:15px;">
+                  ${purifyMarkdown(item.content)}
+                </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                  <button class="y2k-btn sub-btn copy-card-btn" data-idx="${idx}">🔗 복사</button>
+                  <button class="y2k-btn danger-btn delete-card-btn" data-id="${item.id}">🗑️ 삭제</button>
+                </div>
+              </div>
+            `).join('');
+
+            // 복사 버튼 이벤트
+            document.querySelectorAll('.copy-card-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const idx = e.currentTarget.dataset.idx;
+                    await navigator.clipboard.writeText(items[idx].content.split('[YOUTUBE:')[0].trim());
+                    alert('입덕 백서 내용이 복사되었습니다! 💌');
+                });
+            });
+
+            // 개별 삭제 버튼 이벤트
+            document.querySelectorAll('.delete-card-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    const newItems = items.filter(it => it.id !== id);
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(newItems));
+                    loadStorage();
+                });
+            });
+        }
+
+        // 5. 보관함 전체 비우기
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                if (confirm('보관함에 저장된 모든 입덕 백서를 삭제할까요?')) {
+                    localStorage.removeItem(STORAGE_KEY);
+                    loadStorage();
+                }
+            });
+        }
+
+        // 6. 탭 전환
         tabButtons.forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetTab = btn.dataset.tab;
@@ -225,15 +332,17 @@
                 const targetContent = document.getElementById(`tab-${targetTab}`);
                 if (targetContent) targetContent.classList.add('active');
 
-                if (targetTab === 'storage' && window.loadStorageItems) window.loadStorageItems();
-                if (targetTab === 'youtube' && window.renderYoutubeLinks) window.renderYoutubeLinks(currentGuide ? currentGuide.biasName : '');
+                if (targetTab === 'storage') loadStorage();
+                if (targetTab === 'youtube') renderYoutube(currentGuide ? currentGuide.biasName : '', currentGuide ? currentGuide.content : '');
             });
         });
 
+        // 7. 칩 토글
         chipButtons.forEach(chip => {
             chip.addEventListener('click', () => chip.classList.toggle('active'));
         });
 
+        // 8. 폼 제출 및 생성
         biasForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const biasName = biasNameInput.value.trim();
@@ -274,7 +383,7 @@
                 };
 
                 resultBox.style.display = 'block';
-                if (window.renderYoutubeLinks) window.renderYoutubeLinks(biasName);
+                renderYoutube(biasName, rawText);
             } catch (err) {
                 alert(`오류: ${err.message}`);
             } finally {
@@ -283,25 +392,36 @@
             }
         });
 
+        // 9. 보관함에 저장 버튼 클릭 (정상 작동)
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
-                if (!currentGuide || !window.saveToStorage) return;
-                window.saveToStorage(currentGuide);
-                alert('영업 백서 보관함에 저장되었습니다!');
+                if (!currentGuide) {
+                    alert('저장할 입덕 백서가 없습니다.');
+                    return;
+                }
+                const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+                saved.unshift(currentGuide);
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+                alert('💖 [영업 백서 보관함]에 안전하게 저장되었습니다!');
             });
         }
 
+        // 10. 텍스트 복사 버튼 클릭
         if (shareLinkBtn) {
             shareLinkBtn.addEventListener('click', async () => {
                 if (!currentGuide || !currentGuide.content) return;
                 try {
-                    await navigator.clipboard.writeText(currentGuide.content);
-                    alert('입덕 백서 내용이 클립보드에 복사되었습니다!');
+                    const cleanText = currentGuide.content.split('[YOUTUBE:')[0].trim();
+                    await navigator.clipboard.writeText(cleanText);
+                    alert('💌 입덕 백서 전문이 클립보드에 복사되었습니다! 친구에게 카톡으로 보내보세요.');
                 } catch (err) {
                     alert('복사에 실패했습니다.');
                 }
             });
         }
+
+        // 초기 보관함 로드
+        loadStorage();
     });
   </script>
 </body>
