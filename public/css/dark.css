@@ -1,0 +1,55 @@
+body.dark-mode {
+    --bg-color: #12111a;
+    --bg-grid: #28243d;
+    --card-bg: #1c1a29;
+    --text-main: #f3f3f8;
+    --text-sub: #a5a3bc;
+    --border-color: #ffffff;
+  
+    --primary: #ff529a;
+    --primary-hover: #ff2d84;
+    --secondary: #9d71fd;
+    --accent-yellow: #ffe600;
+    --accent-mint: #2ef3ee;
+  
+    --y2k-shadow: 4px 4px 0px #ffffff;
+    --y2k-shadow-hover: 6px 6px 0px #ffffff;
+    --y2k-shadow-active: 1px 1px 0px #ffffff;
+  }
+  
+  body.dark-mode .y2k-btn {
+    background-color: #27243a;
+    color: #ffffff;
+  }
+  
+  body.dark-mode .tab-btn {
+    background-color: #27243a;
+    color: #ffffff;
+  }
+  
+  body.dark-mode .tab-btn.active {
+    background-color: var(--secondary);
+  }
+  
+  body.dark-mode .step-card,
+  body.dark-mode .saved-card,
+  body.dark-mode .yt-link-card,
+  body.dark-mode .photocard-frame {
+    background-color: #242236;
+  }
+  
+  body.dark-mode input[type="text"],
+  body.dark-mode textarea {
+    background-color: #27243a;
+    color: #ffffff;
+  }
+  
+  body.dark-mode .chip {
+    background-color: #27243a;
+    color: #ffffff;
+  }
+  
+  body.dark-mode .chip.active {
+    background-color: var(--accent-yellow);
+    color: #12111a;
+  }

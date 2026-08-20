@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>최애 아카이브 | Bias Archive</title>
+  
+  <!-- Google Fonts & Y2K 폰트 (Pretendard & Dungsung) -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+  
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="/public/css/style.css">
+  <link rel="stylesheet" href="/public/css/animation.css">
+  <link rel="stylesheet" href="/public/css/dark.css">
+</head>
+<body>
+  <div class="background-grid"></div>
+
+  <div class="app-container">
+    <!-- 상단 네비게이션 & 헤더 -->
+    <header class="header">
+      <div class="logo-group">
+        <span class="badge y2k-pill">💿 FANDOM ARCHIVE</span>
+        <h1 class="logo-title">💖 최애 아카이브</h1>
+      </div>
+      
+      <div class="header-controls">
+        <button id="themeToggle" class="y2k-btn icon-btn" title="테마 변경">
+          <span id="themeIcon">☀️</span> <span id="themeText">라이트</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 탭 네비게이션 메뉴 -->
+    <nav class="nav-tabs">
+      <button class="tab-btn active" data-tab="about">
+        <span>✨</span> 아카이브 소개
+      </button>
+      <button class="tab-btn" data-tab="generator">
+        <span>🎯</span> 입덕 가이드 생성
+      </button>
+      <button class="tab-btn" data-tab="storage">
+        <span>📂</span> 영업 백서 보관함
+      </button>
+      <button class="tab-btn" data-tab="youtube">
+        <span>🎬</span> 추천 킬링영상
+      </button>
+    </nav>
+
+    <!-- 메인 컨텐츠 영역 -->
+    <main class="content-area">
+      
+      <!-- 1. 아카이브 소개 탭 -->
+      <section id="tab-about" class="tab-content active fade-in">
+        <div class="y2k-card hero-card">
+          <div class="sticker-tag">WELCOME! 🎀</div>
+          <h2>"나만 알고 있기엔 너무 아까운 내 최애를 세상에!"</h2>
+          <p class="desc">
+            <strong>최애 아카이브(Bias Archive)</strong>는 나만의 최애 아이돌을 친구나 입덕 예정자에게 가장 매력적으로 소개할 수 있도록 
+            <strong>AI 맞춤형 입덕 영업 백서</strong>와 <strong>자체 콘텐츠(자컨) 큐레이션</strong>을 만들어주는 공간입니다.
+          </p>
+
+          <div class="guide-steps">
+            <div class="step-card">
+              <div class="step-num">01</div>
+              <h3>최애 & 취향 입력</h3>
+              <p>아이돌 이름과 상대방의 평소 취향(보컬, 춤, 예능감 등)을 입력하세요.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-num">02</div>
+              <h3>AI 입덕 백서 생성</h3>
+              <p>Gemini AI가 킬링 포인트 요약과 입덕 추천 루트를 분석해 드립니다.</p>
+            </div>
+            <div class="step-card">
+              <div class="step-num">03</div>
+              <h3>자컨 & 직캠 영업</h3>
+              <p>필수 시청 자체 콘텐츠 및 직캠을 바로 확인하고 링크를 공유해 보세요!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. 입덕 가이드 생성 탭 -->
+      <section id="tab-generator" class="tab-content fade-in">
+        <div class="y2k-card form-card">
+          <div class="sticker-tag">BIAS PROFILE 📼</div>
+          <h2>입덕 가이드 생성하기</h2>
+          <p class="sub-text">영업하고 싶은 최애의 정보와 친구의 취향을 알려주세요.</p>
+
+          <form id="biasForm" class="bias-form">
+            <div class="form-group">
+              <label for="biasName">💖 최애 아이돌 그룹 & 멤버 이름</label>
+              <input type="text" id="biasName" placeholder="예: 세븐틴 호시, 아이브 안유진" required />
+            </div>
+
+            <div class="form-group">
+              <label for="friendTaste">🎯 상대방의 평소 취향 또는 매력 포인트</label>
+              <textarea id="friendTaste" rows="4" placeholder="예: 평소 무대 위 칼군무와 갭차이 심한 귀여운 예능감을 좋아해! 노래는 청량한 스타일을 선호하는 편이야." required></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>✨ 집중 영업 포인트 (선택)</label>
+              <div class="chip-group">
+                <button type="button" class="chip" data-val="칼군무/메인댄서">💃 칼군무/메인댄서</button>
+                <button type="button" class="chip" data-val="음색깡패/고음">🎤 음색깡패/보컬</button>
+                <button type="button" class="chip" data-val="예능감/자컨">🤣 자컨/예능감</button>
+                <button type="button" class="chip" data-val="비주얼/무대장인">✨ 비주얼/표정연기</button>
+                <button type="button" class="chip" data-val="작사작곡/천재">🎹 작사작곡/프로듀싱</button>
+              </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="y2k-btn primary-btn full-btn">
+              <span>🚀 입덕 백서 생성하기 (영업 시작!)</span>
+            </button>
+          </form>
+
+          <!-- 로딩 상태 -->
+          <div id="loadingBox" class="loading-box" style="display: none;">
+            <div class="spinner"></div>
+            <p>최애의 킬링 포인트와 레전드 영상을 모으는 중... 💿</p>
+          </div>
+
+          <!-- 생성 결과 카드 -->
+          <div id="resultBox" class="result-box" style="display: none;">
+            <div class="photocard-frame">
+              <div class="pc-header">
+                <span class="pc-badge">LIMITED EDITION</span>
+                <span id="resultBiasTitle" class="pc-title">최애 이름</span>
+              </div>
+              <div id="resultContent" class="pc-body"></div>
+              <div class="pc-footer">
+                <button id="saveBtn" class="y2k-btn secondary-btn">📂 보관함에 저장</button>
+                <button id="shareLinkBtn" class="y2k-btn sub-btn">🔗 텍스트 복사</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. 보관함 탭 -->
+      <section id="tab-storage" class="tab-content fade-in">
+        <div class="y2k-card">
+          <div class="sticker-tag">MY ARCHIVE 📂</div>
+          <div class="storage-header">
+            <h2>영업 백서 보관함</h2>
+            <button id="clearAllBtn" class="y2k-btn danger-btn">전체 비우기</button>
+          </div>
+          <p class="sub-text">저장해 둔 입덕 가이드 카드를 언제든 다시 꺼내보세요.</p>
+
+          <div id="storageList" class="storage-grid">
+            <!-- 저장된 카드들이 동적으로 추가됩니다 -->
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. 추천 킬링영상 탭 -->
+      <section id="tab-youtube" class="tab-content fade-in">
+        <div class="y2k-card">
+          <div class="sticker-tag">YOUTUBE VAULT 🎬</div>
+          <h2>추천 킬링영상 & 자체 콘텐츠</h2>
+          <p class="sub-text">최애의 레전드 직캠과 필수 시청 자체 예능(자컨) 딥링크 모음입니다.</p>
+
+          <div id="youtubeVault" class="youtube-list">
+            <!-- 유튜브 바로가기 태그들이 생성됩니다 -->
+            <div class="empty-state">
+              <p>아직 생성된 입덕 가이드가 없습니다. <strong>[입덕 가이드 생성]</strong> 탭에서 먼저 영업을 시작해 보세요!</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <footer class="footer">
+      <p>© 2026 최애 아카이브 (Bias Archive) 💖 All rights reserved.</p>
+    </footer>
+  </div>
+
+  <!-- JavaScript Modules -->
+  <script src="/public/js/theme.js"></script>
+  <script src="/public/js/storage.js"></script>
+  <script src="/public/js/youtube.js"></script>
+  <script src="/public/js/app.js"></script>
+</body>
+</html>
