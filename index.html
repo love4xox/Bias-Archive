@@ -1,3 +1,11 @@
+답답하셨을 텐데, 화면을 확인해 보니 현재 실행 중인 JS 파일이 전혀 수정되지 않고 예전 파일 그대로 실행되고 있는 상태입니다. (수정된 cleanAndFormatText나 removeMarkdown 함수가 아예 거쳐가지 않고 구버전 코드가 텍스트를 그대로 박아 넣고 있습니다.)
+
+app.js 파일이 브라우저나 서버 캐시 문제로 갱신되지 않을 때, HTML 파일 내부에 스크립트를 직접 박아 넣으면 캐시와 상관없이 100% 즉시 적용됩니다.
+
+public/index.html 파일 전체를 아래 코드로 완전히 교체해 주세요.
+
+public/index.html 전체 교체 코드
+HTML
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -5,10 +13,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>최애 아카이브 | Bias Archive</title>
   
-  <!-- Marked.js 마크다운 렌더러 CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-  <!-- Google Fonts & Y2K 폰트 (Pretendard & Dungsung) -->
+  <!-- Google Fonts & Y2K 폰트 (Pretendard) -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   
   <!-- CSS Stylesheets -->
@@ -164,7 +169,6 @@
           <p class="sub-text">최애의 레전드 직캠과 필수 시청 자체 예능(자컨) 딥링크 모음입니다.</p>
 
           <div id="youtubeVault" class="youtube-list">
-            <!-- 유튜브 바로가기 태그들이 생성됩니다 -->
             <div class="empty-state">
               <p>아직 생성된 입덕 가이드가 없습니다. <strong>[입덕 가이드 생성]</strong> 탭에서 먼저 영업을 시작해 보세요!</p>
             </div>
@@ -179,10 +183,146 @@
     </footer>
   </div>
 
-<!-- JavaScript Modules -->
-<script src="/public/js/theme.js?v=99"></script>
-<script src="/public/js/storage.js?v=99"></script>
-<script src="/public/js/youtube.js?v=99"></script>
-<script src="/public/js/app.js?v=99"></script>
+  <!-- JavaScript Modules -->
+  <script src="/public/js/theme.js"></script>
+  <script src="/public/js/storage.js"></script>
+  <script src="/public/js/youtube.js"></script>
+
+  <!-- 캐시 무시 인라인 스크립트 실행 -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const biasForm = document.getElementById('biasForm');
+        const biasNameInput = document.getElementById('biasName');
+        const friendTasteInput = document.getElementById('friendTaste');
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingBox = document.getElementById('loadingBox');
+        const resultBox = document.getElementById('resultBox');
+        const resultContent = document.getElementById('resultContent');
+        const resultBiasTitle = document.getElementById('resultBiasTitle');
+        const saveBtn = document.getElementById('saveBtn');
+        const shareLinkBtn = document.getElementById('shareLinkBtn');
+        const chipButtons = document.querySelectorAll('.chip');
+
+        let currentGuide = null;
+
+        // 마크다운 기호 완벽 박멸 함수
+        function purifyMarkdown(raw) {
+            if (!raw) return '';
+            
+            let text = raw.split('[YOUTUBE:')[0].trim();
+
+            // 1. 구분선 (---)
+            text = text.replace(/^-{3,}$/gm, '<hr style="border:0; border-top:2px dashed #ff99cc; margin:16px 0;">');
+
+            // 2. 제목 (####, ###, ##, #)
+            text = text.replace(/^#{1,6}\s*(.*$)/gim, '<div style="font-size:1.15rem; font-weight:800; color:#ff4d8d; margin-top:20px; margin-bottom:8px;">$1</div>');
+
+            // 3. 볼드 (**텍스트**)
+            text = text.replace(/\*\*(.*?)\*\*/g, '<span style="color:#7928ca; font-weight:800; background:rgba(255,230,240,0.6); padding:0 4px; border-radius:4px;">$1</span>');
+
+            // 4. 불릿 (*, -)
+            text = text.replace(/^\s*[\*\-]\s*(.*$)/gim, '<div style="margin-left:6px; margin-bottom:6px;">✨ $1</div>');
+
+            // 5. 남은 별표 제거
+            text = text.replace(/\*/g, '');
+
+            // 6. 줄바꿈
+            text = text.replace(/\n/g, '<br>');
+
+            return text;
+        }
+
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.dataset.tab;
+                tabButtons.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                btn.classList.add('active');
+                const targetContent = document.getElementById(`tab-${targetTab}`);
+                if (targetContent) targetContent.classList.add('active');
+
+                if (targetTab === 'storage' && window.loadStorageItems) window.loadStorageItems();
+                if (targetTab === 'youtube' && window.renderYoutubeLinks) window.renderYoutubeLinks(currentGuide ? currentGuide.biasName : '');
+            });
+        });
+
+        chipButtons.forEach(chip => {
+            chip.addEventListener('click', () => chip.classList.toggle('active'));
+        });
+
+        biasForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const biasName = biasNameInput.value.trim();
+            const friendTaste = friendTasteInput.value.trim();
+            const selectedChips = Array.from(document.querySelectorAll('.chip.active')).map(c => c.dataset.val);
+
+            if (!biasName || !friendTaste) return;
+
+            submitBtn.disabled = true;
+            loadingBox.style.display = 'block';
+            resultBox.style.display = 'none';
+
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        biasName: biasName,
+                        friendTaste: friendTaste,
+                        focusPoints: selectedChips
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || '생성에 실패했습니다.');
+
+                const rawText = data.reply || data.guide || data.result || data.message || '';
+                resultBiasTitle.innerText = `${biasName} 입덕 가이드`;
+                
+                // 정제 함수로 강제 변환 적용
+                resultContent.innerHTML = purifyMarkdown(rawText);
+
+                currentGuide = {
+                    id: Date.now().toString(),
+                    biasName: biasName,
+                    friendTaste: friendTaste,
+                    focusPoints: selectedChips,
+                    content: rawText,
+                    createdAt: new Date().toISOString()
+                };
+
+                resultBox.style.display = 'block';
+                if (window.renderYoutubeLinks) window.renderYoutubeLinks(biasName);
+            } catch (err) {
+                alert(`오류: ${err.message}`);
+            } finally {
+                loadingBox.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                if (!currentGuide || !window.saveToStorage) return;
+                window.saveToStorage(currentGuide);
+                alert('영업 백서 보관함에 저장되었습니다!');
+            });
+        }
+
+        if (shareLinkBtn) {
+            shareLinkBtn.addEventListener('click', async () => {
+                if (!currentGuide || !currentGuide.content) return;
+                try {
+                    await navigator.clipboard.writeText(currentGuide.content);
+                    alert('입덕 백서 내용이 클립보드에 복사되었습니다!');
+                } catch (err) {
+                    alert('복사에 실패했습니다.');
+                }
+            });
+        }
+    });
+  </script>
 </body>
 </html>
