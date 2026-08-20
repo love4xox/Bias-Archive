@@ -15,25 +15,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentGuide = null;
 
-  // 마크다운 문법을 HTML로 직접 변환하는 내장 파서 함수
-  function parseMarkdownToHTML(text) {
+  // 마크다운 완벽 제거 및 HTML 변환기
+  function formatGuideText(text) {
       if (!text) return '';
-      
-      let html = text
-          // 1. 구분선 치환 (---)
+
+      // 유튜브 검색 태그 분리
+      let cleanText = text.split('[YOUTUBE:')[0].trim();
+
+      return cleanText
+          // 1. 구분선 치환
           .replace(/^---$/gm, '<hr>')
-          // 2. 제목 치환 (###, ##, #)
-          .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-          .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-          .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-          // 3. 볼드체 치환 (**내용**)
-          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-          // 4. 리스트 항목 치환 (* 항목)
-          .replace(/^\* (.*$)/gim, '<div class="list-item">• $1</div>')
+          // 2. 제목 (###, ####) 치환
+          .replace(/^#{1,6}\s*(.*$)/gim, '<h3 style="color:#ff4d8d; margin-top:16px; margin-bottom:8px; font-weight:800;">$1</h3>')
+          // 3. 굵은 글씨 (**텍스트**) 치환
+          .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#8b5cf6; font-weight:800;">$1</strong>')
+          // 4. 불릿 포인트 (* 항목) 치환
+          .replace(/^\s*\*\s*(.*$)/gim, '<div style="margin-left:8px; margin-bottom:4px;">• $1</div>')
           // 5. 줄바꿈 처리
           .replace(/\n/g, '<br>');
-
-      return html;
   }
 
   tabButtons.forEach(btn => {
@@ -77,9 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                  bias_name: biasName,
-                  friend_taste: friendTaste,
-                  focus_points: selectedChips
+                  biasName: biasName,
+                  friendTaste: friendTaste,
+                  focusPoints: selectedChips
               })
           });
 
@@ -89,18 +88,19 @@ document.addEventListener('DOMContentLoaded', () => {
               throw new Error(data.error || '생성에 실패했습니다.');
           }
 
-          const guideText = data.guide || data.result || data.message || '';
+          // 서버 응답 키인 data.reply를 정확히 매핑
+          const rawText = data.reply || data.guide || data.result || data.message || '';
           resultBiasTitle.innerText = `${biasName} 입덕 가이드`;
 
-          // 자체 내장 파서로 마크다운 기호 완전히 제거 및 서식 변환
-          resultContent.innerHTML = parseMarkdownToHTML(guideText);
+          // HTML 변환 함수 적용
+          resultContent.innerHTML = formatGuideText(rawText);
 
           currentGuide = {
               id: Date.now().toString(),
               biasName: biasName,
               friendTaste: friendTaste,
               focusPoints: selectedChips,
-              content: guideText,
+              content: rawText,
               createdAt: new Date().toISOString()
           };
 
