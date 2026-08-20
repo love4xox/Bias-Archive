@@ -152,8 +152,9 @@ body {
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  overflow-x: auto;
+  overflow-x: hidden;
   padding-bottom: 4px;
+  width: 100%;
 }
 
 .tab-btn {
