@@ -15,6 +15,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentGuide = null;
 
+  // 마크다운 문법을 HTML로 직접 변환하는 내장 파서 함수
+  function parseMarkdownToHTML(text) {
+      if (!text) return '';
+      
+      let html = text
+          // 1. 구분선 치환 (---)
+          .replace(/^---$/gm, '<hr>')
+          // 2. 제목 치환 (###, ##, #)
+          .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+          .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+          .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+          // 3. 볼드체 치환 (**내용**)
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          // 4. 리스트 항목 치환 (* 항목)
+          .replace(/^\* (.*$)/gim, '<div class="list-item">• $1</div>')
+          // 5. 줄바꿈 처리
+          .replace(/\n/g, '<br>');
+
+      return html;
+  }
+
   tabButtons.forEach(btn => {
       btn.addEventListener('click', () => {
           const targetTab = btn.dataset.tab;
@@ -71,11 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const guideText = data.guide || data.result || data.message || '';
           resultBiasTitle.innerText = `${biasName} 입덕 가이드`;
 
-          if (window.marked) {
-              resultContent.innerHTML = marked.parse(guideText);
-          } else {
-              resultContent.innerHTML = guideText.replace(/\n/g, '<br>');
-          }
+          // 자체 내장 파서로 마크다운 기호 완전히 제거 및 서식 변환
+          resultContent.innerHTML = parseMarkdownToHTML(guideText);
 
           currentGuide = {
               id: Date.now().toString(),
