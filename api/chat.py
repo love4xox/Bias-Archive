@@ -1,9 +1,3 @@
-api/chat.py의 전체 코드에서 SYSTEM_PROMPT를 요청하신 간결한 버전으로 교체하고, 기존 코드 중 모델명 오타(gemini-3.5-flash -> 공식 명칭 gemini-1.5-flash) 부분까지 안전하게 수정한 전체 완성 코드입니다.
-
-api/chat.py 파일을 열고 전체 내용을 아래 코드로 교체해 주세요.
-
-api/chat.py 전체 코드
-Python
 import os
 import json
 import urllib.request
@@ -29,7 +23,6 @@ def send_discord_notification(bias_name, friend_taste, reply_summary):
         return
 
     clean_reply = reply_summary.split("[YOUTUBE:")[0].strip()
-
     payload = {
         "content": "💿 **[최애 아카이브] 새로운 입덕 가이드가 생성되었습니다!**",
         "embeds": [
@@ -63,7 +56,7 @@ class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         content_length = int(self.headers.get('Content-Length', 0))
         body = self.rfile.read(content_length)
-        
+
         try:
             data = json.loads(body.decode('utf-8')) if body else {}
             bias_name = data.get('biasName', '').strip()
@@ -88,7 +81,6 @@ class handler(BaseHTTPRequestHandler):
 위 정보를 바탕으로 친구의 취향을 저격할 최고의 맞춤형 입덕 영업 백서를 만들어주세요!
 """
 
-            # Gemini 1.5 Flash Direct REST API 호출
             endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
             gemini_payload = {
                 "system_instruction": {
@@ -110,8 +102,7 @@ class handler(BaseHTTPRequestHandler):
             with urllib.request.urlopen(req, timeout=25) as response:
                 result_raw = response.read().decode('utf-8')
                 result_json = json.loads(result_raw)
-                
-                # 텍스트 응답 추출
+
                 reply_text = ""
                 try:
                     candidates = result_json.get("candidates", [])
