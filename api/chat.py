@@ -1,11 +1,11 @@
 import os
 import json
 import urllib.request
+import urllib.error
 from http.server import BaseHTTPRequestHandler
-import google.generativeai as genai
 
 SYSTEM_PROMPT = """
-당신은 K-POP 아이돌 팬덤 문화와 최애 영업에 통달한 센스 넘치는 전문 덕질 큐레이터 '최애 아카이브' AI 에이전트입니다.
+당신은 K-POP 아이돌 팬덤 문화와 최애 영업에 통달한 전문 덕질 큐레이터 '최애 아카이브' AI 에이전트입니다.
 친구의 심장을 저격할 맞춤형 '입덕 백서'를 작성해 주세요.
 
 [작성 규칙]
@@ -47,9 +47,9 @@ def send_discord_notification(bias_name, friend_taste, reply_summary):
                 'User-Agent': 'Mozilla/5.0 (compatible; DiscordBot/1.0)'
             }
         )
-        urllib.request.urlopen(req, timeout=4)
+        urllib.request.urlopen(req, timeout=3)
     except Exception as e:
-        print(f"Webhook 알림 전송 에러: {e}")
+        print(f"Webhook 전송 에러: {e}")
 
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -68,17 +68,11 @@ class handler(BaseHTTPRequestHandler):
 
             api_key = os.environ.get("GEMINI_API_KEY")
             if not api_key:
-                self._send_json(500, {'error': 'Vercel에 GEMINI_API_KEY 환경변수가 설정되지 않았습니다.'})
+                self._send_json(500, {'error': 'GEMINI_API_KEY 환경변수가 설정되지 않았습니다.'})
                 return
 
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel(
-                model_name='gemini-3.5-flash',
-                system_instruction=SYSTEM_PROMPT
-            )
-
             focus_points_text = ', '.join(focus_points) if isinstance(focus_points, list) else str(focus_points)
-            user_prompt = f"""
+            prompt_text = f"""
 - 최애 아이돌: {bias_name}
 - 친구의 취향: {friend_taste}
 - 집중 영업 포인트: {focus_points_text}
@@ -86,16 +80,49 @@ class handler(BaseHTTPRequestHandler):
 위 정보를 바탕으로 친구의 취향을 저격할 최고의 맞춤형 입덕 영업 백서를 만들어주세요!
 """
 
-            response = model.generate_content(user_prompt)
-            reply_text = response.text if response and response.text else "입덕 가이드 생성에 실패했습니다."
+            # Gemini 1.5 Flash Direct REST API 호출
+            endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
+            gemini_payload = {
+                "system_instruction": {
+                    "parts": [{"text": SYSTEM_PROMPT}]
+                },
+                "contents": [
+                    {
+                        "parts": [{"text": prompt_text}]
+                    }
+                ]
+            }
 
-            try:
+            req = urllib.request.Request(
+                endpoint,
+                data=json.dumps(gemini_payload).encode('utf-8'),
+                headers={'Content-Type': 'application/json'}
+            )
+
+            with urllib.request.urlopen(req, timeout=25) as response:
+                result_raw = response.read().decode('utf-8')
+                result_json = json.loads(result_raw)
+                
+                # 텍스트 응답 추출
+                reply_text = ""
+                try:
+                    candidates = result_json.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        if parts:
+                            reply_text = parts[0].get("text", "")
+                except Exception:
+                    pass
+
+                if not reply_text:
+                    reply_text = "입덕 가이드 생성 응답을 가져오지 못했습니다."
+
                 send_discord_notification(bias_name, friend_taste, reply_text)
-            except Exception:
-                pass
+                self._send_json(200, {'reply': reply_text})
 
-            self._send_json(200, {'reply': reply_text})
-
+        except urllib.error.HTTPError as e:
+            err_msg = e.read().decode('utf-8')
+            self._send_json(e.code, {'error': f'Gemini API 오류 ({e.code}): {err_msg}'})
         except Exception as e:
             self._send_json(500, {'error': f'서버 처리 오류: {str(e)}'})
 
