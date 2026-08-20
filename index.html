@@ -5,9 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>최애 아카이브 | Bias Archive</title>
   
-  <!-- 파비콘 (✨ 반짝이) -->
-  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E">
-  <link rel="shortcut icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20100%20100'%3E%3Ctext%20y='.9em'%20font-size='90'%3E%E2%9C%A8%3C/text%3E%3C/svg%3E">
+  <!-- ✨ 반짝이 파비콘 즉시 강제 생성 (브라우저 호환성 100%) -->
+  <script>
+    (function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.font = '50px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✨', 32, 35);
+      const link = document.createElement('link');
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = canvas.toDataURL('image/png');
+      document.head.appendChild(link);
+    })();
+  </script>
 
   <!-- Google Fonts & Y2K 폰트 (Pretendard) -->
   <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
@@ -433,7 +448,7 @@
             }
         });
 
-        // 9. 보관함에 저장 버튼 클릭 (저장 후 보관함 탭으로 바로 이동)
+        // 9. 보관함에 저장 버튼 클릭
         if (saveBtn) {
             saveBtn.addEventListener('click', () => {
                 if (!currentGuide) {
@@ -444,8 +459,6 @@
                 saved.unshift(currentGuide);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
                 alert('💖 [영업 백서 보관함]에 안전하게 저장되었습니다!\n보관함으로 이동합니다.');
-                
-                // 보관함 탭으로 화면 자동 전환
                 switchTab('storage');
             });
         }
@@ -464,7 +477,6 @@
             });
         }
 
-        // 초기 로드 시 보관함 데이터 사전 준비
         loadStorage();
     });
   </script>
