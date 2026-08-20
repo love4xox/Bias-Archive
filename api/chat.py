@@ -81,7 +81,7 @@ class handler(BaseHTTPRequestHandler):
 위 정보를 바탕으로 친구의 취향을 저격할 최고의 맞춤형 입덕 영업 백서를 만들어주세요!
 """
 
-            endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={api_key}"
+            endpoint = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key={api_key}"
             gemini_payload = {
                 "system_instruction": {
                     "parts": [{"text": SYSTEM_PROMPT}]
