@@ -2,7 +2,7 @@ import os
 import json
 import urllib.request
 from http.server import BaseHTTPRequestHandler
-from google import genai
+import google.generativeai as genai
 
 SYSTEM_PROMPT = """
 당신은 K-POP 아이돌 팬덤 문화와 최애 영업에 통달한 센스 넘치는 전문 덕질 큐레이터 '최애 아카이브' AI 에이전트입니다.
@@ -29,7 +29,7 @@ def send_discord_notification(bias_name, friend_taste, reply_summary):
                 "title": f"💖 최애 아카이브 | {bias_name} 영업 시작",
                 "color": 16731533,
                 "fields": [
-                    {"name": "🎯 상대방 취향/타겟", "value": friend_taste[:300], "inline": False},
+                    {"name": "🎯 상대방 취향/타겟", "value": str(friend_taste)[:300], "inline": False},
                     {"name": "💌 AI 입덕 백서 요약", "value": clean_reply[:400] + ("..." if len(clean_reply) > 400 else ""), "inline": False}
                 ],
                 "footer": {"text": "최애 아카이브 운영 자동화 시스템"}
@@ -47,7 +47,7 @@ def send_discord_notification(bias_name, friend_taste, reply_summary):
                 'User-Agent': 'Mozilla/5.0 (compatible; DiscordBot/1.0)'
             }
         )
-        urllib.request.urlopen(req, timeout=5)
+        urllib.request.urlopen(req, timeout=4)
     except Exception as e:
         print(f"Webhook 알림 전송 에러: {e}")
 
@@ -63,16 +63,21 @@ class handler(BaseHTTPRequestHandler):
             focus_points = data.get('focusPoints', '')
 
             if not bias_name or not friend_taste:
-                self._send_json(400, {'error': '최애 이름과 상대방 취향을 입력해주세요.'})
+                self._send_json(400, {'error': '최애 이름과 취향을 모두 입력해 주세요.'})
                 return
 
             api_key = os.environ.get("GEMINI_API_KEY")
             if not api_key:
-                self._send_json(500, {'error': 'GEMINI_API_KEY 환경변수가 설정되지 않았습니다.'})
+                self._send_json(500, {'error': 'Vercel에 GEMINI_API_KEY 환경변수가 설정되지 않았습니다.'})
                 return
 
-            focus_points_text = ', '.join(focus_points) if isinstance(focus_points, list) else str(focus_points)
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel(
+                model_name='gemini-3.5-flash',
+                system_instruction=SYSTEM_PROMPT
+            )
 
+            focus_points_text = ', '.join(focus_points) if isinstance(focus_points, list) else str(focus_points)
             user_prompt = f"""
 - 최애 아이돌: {bias_name}
 - 친구의 취향: {friend_taste}
@@ -81,18 +86,18 @@ class handler(BaseHTTPRequestHandler):
 위 정보를 바탕으로 친구의 취향을 저격할 최고의 맞춤형 입덕 영업 백서를 만들어주세요!
 """
 
-            client = genai.Client(api_key=api_key)
-            response = client.models.generate_content(
-                model='gemini-3.5-flash',
-                contents=user_prompt,
-                config={'system_instruction': SYSTEM_PROMPT}
-            )
+            response = model.generate_content(user_prompt)
+            reply_text = response.text if response and response.text else "입덕 가이드 생성에 실패했습니다."
 
-            send_discord_notification(bias_name, friend_taste, response.text)
-            self._send_json(200, {'reply': response.text})
+            try:
+                send_discord_notification(bias_name, friend_taste, reply_text)
+            except Exception:
+                pass
+
+            self._send_json(200, {'reply': reply_text})
 
         except Exception as e:
-            self._send_json(500, {'error': f'서버 오류: {str(e)}'})
+            self._send_json(500, {'error': f'서버 처리 오류: {str(e)}'})
 
     def _send_json(self, status_code, payload):
         self.send_response(status_code)
