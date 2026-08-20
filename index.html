@@ -1,3 +1,13 @@
+원인을 바로 찾았습니다!
+
+CSS에 추가된 .loading-box 스타일에 !important가 들어가 있어서, HTML의 style="display: none;"을 무시하고 처음부터 로딩 창이 화면에 계속 떠 있는 상태였습니다.
+
+이로 인해 폼 제출 여부와 상관없이 로딩 창이 계속 켜져 있던 것입니다.
+
+public/index.html 파일을 열고 전체 코드를 아래 코드로 깔끔하게 교체해 주세요.
+
+public/index.html 전체 교체 코드
+HTML
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -5,7 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>최애 아카이브 | Bias Archive</title>
   
-  <!-- ✨ 반짝이 파비콘 즉시 강제 생성 (브라우저 호환성 100%) -->
+  <!-- ✨ 반짝이 파비콘 즉시 강제 생성 -->
   <script>
     (function() {
       const canvas = document.createElement('canvas');
@@ -33,19 +43,22 @@
   <link rel="stylesheet" href="/public/css/dark.css">
 
   <style>
-    /* 로딩 박스 완벽 가운데 정렬 */
+    /* 로딩 박스 기본 숨김 및 활성화 시 flex 중앙 정렬 */
     .loading-box {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      margin: 30px auto;
+      padding: 20px;
+      width: 100%;
+    }
+    .loading-box.active {
       display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      justify-content: center !important;
-      text-align: center !important;
-      margin: 30px auto !important;
-      padding: 20px !important;
-      width: 100% !important;
     }
     .loading-box .spinner {
-      margin: 0 auto 15px auto !important;
+      margin: 0 auto 15px auto;
     }
     .loading-box p {
       font-weight: 700;
@@ -169,8 +182,8 @@
             </button>
           </form>
 
-          <!-- 로딩 상태 (가운데 정렬) -->
-          <div id="loadingBox" class="loading-box" style="display: none;">
+          <!-- 로딩 상태 -->
+          <div id="loadingBox" class="loading-box">
             <div class="spinner"></div>
             <p>최애의 킬링 포인트와 레전드 영상을 모으는 중... 💿</p>
           </div>
@@ -408,7 +421,7 @@
             if (!biasName || !friendTaste) return;
 
             submitBtn.disabled = true;
-            loadingBox.style.display = 'flex';
+            loadingBox.classList.add('active'); // active 클래스로 flex 표시
             resultBox.style.display = 'none';
 
             try {
@@ -443,7 +456,7 @@
             } catch (err) {
                 alert(`오류: ${err.message}`);
             } finally {
-                loadingBox.style.display = 'none';
+                loadingBox.classList.remove('active'); // 로딩 종료 시 정상 숨김
                 submitBtn.disabled = false;
             }
         });
