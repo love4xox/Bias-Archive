@@ -15,31 +15,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentGuide = null;
 
-  // 마크다운 특수문자 완벽 제거 및 줄바꿈/소제목 스타일 변환 함수
-  function cleanAndFormatText(text) {
-      if (!text) return '';
+  // 모든 마크다운 특수문자를 완벽히 제거하고 예쁘게 꾸미는 함수
+  function removeMarkdown(rawText) {
+      if (!rawText) return '';
 
-      // 1. 유튜브 태그 분리
-      let cleanText = text.split('[YOUTUBE:')[0].trim();
+      // 1. 유튜브 태그 제거
+      let text = rawText.split('[YOUTUBE:')[0].trim();
 
-      // 2. 구분선 (---) 제거 및 실선 추가
-      cleanText = cleanText.replace(/^-{3,}$/gm, '<hr style="border:0; border-top:2px dashed #ff99cc; margin:16px 0;">');
+      // 2. 구분선 (---) 제거 및 예쁜 점선 삽입
+      text = text.replace(/^-{3,}$/gm, '<hr style="border:0; border-top:2px dashed #ff99cc; margin:16px 0;">');
 
-      // 3. 제목 (#, ##, ###, ####) 기호 제거 후 소제목 스타일 적용
-      cleanText = cleanText.replace(/^#{1,6}\s*(.*$)/gim, '<div style="font-size:1.1rem; font-weight:800; color:#ff4d8d; margin-top:18px; margin-bottom:8px;">$1</div>');
+      // 3. 제목 (#, ##, ###, ####) 기호 완전 삭제 후 볼드 핑크 제목으로 변환
+      text = text.replace(/^#{1,6}\s*(.*$)/gim, '<div style="font-size:1.15rem; font-weight:800; color:#ff4d8d; margin-top:20px; margin-bottom:8px;">$1</div>');
 
-      // 4. 볼드체 별표 (**) 완전히 제거하고 보라색 강조 처리
-      cleanText = cleanText.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#7928ca; font-weight:800;">$1</strong>');
+      // 4. 별표 (**강조**) 기호 완전 삭제 후 보라색 굵은 글씨로 변환
+      text = text.replace(/\*\*(.*?)\*\*/g, '<span style="color:#7928ca; font-weight:800; background:rgba(255,230,240,0.6); padding:0 3px; border-radius:3px;">$1</span>');
 
-      // 5. 불릿 포인트 (* 또는 -) 기호 제거 후 깔끔한 동그라미 처리
-      cleanText = cleanText.replace(/^\s*[\*\-]\s*(.*$)/gim, '<div style="margin-left:6px; margin-bottom:4px;">✨ $1</div>');
+      // 5. 불릿 기호 (* 또는 -) 완전 삭제 후 반짝이 이모지로 변환
+      text = text.replace(/^\s*[\*\-]\s*(.*$)/gim, '<div style="margin-left:6px; margin-bottom:5px;">✨ $1</div>');
 
-      // 6. 줄바꿈을 <br>로 변경
-      cleanText = cleanText.replace(/\n/g, '<br>');
+      // 6. 혹시 남아있는 단독 별표(*) 기호 제거
+      text = text.replace(/\*/g, '');
 
-      return cleanText;
+      // 7. 줄바꿈 적용
+      text = text.replace(/\n/g, '<br>');
+
+      return text;
   }
 
+  // 탭 전환
   tabButtons.forEach(btn => {
       btn.addEventListener('click', () => {
           const targetTab = btn.dataset.tab;
@@ -58,12 +62,14 @@ document.addEventListener('DOMContentLoaded', () => {
       });
   });
 
+  // 칩 선택 토글
   chipButtons.forEach(chip => {
       chip.addEventListener('click', () => {
           chip.classList.toggle('active');
       });
   });
 
+  // 백서 생성 제출
   biasForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const biasName = biasNameInput.value.trim();
@@ -96,8 +102,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const rawText = data.reply || data.guide || data.result || data.message || '';
           resultBiasTitle.innerText = `${biasName} 입덕 가이드`;
 
-          // innerText가 아니라 innerHTML로 정제된 텍스트 주입
-          resultContent.innerHTML = cleanAndFormatText(rawText);
+          // 마크다운 제거 함수를 거쳐 HTML로 주입
+          resultContent.innerHTML = removeMarkdown(rawText);
 
           currentGuide = {
               id: Date.now().toString(),
