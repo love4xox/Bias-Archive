@@ -15,24 +15,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentGuide = null;
 
-  // 마크다운 완벽 제거 및 HTML 변환기
-  function formatGuideText(text) {
+  // 마크다운 특수문자 완벽 제거 및 줄바꿈/소제목 스타일 변환 함수
+  function cleanAndFormatText(text) {
       if (!text) return '';
 
-      // 유튜브 검색 태그 분리
+      // 1. 유튜브 태그 분리
       let cleanText = text.split('[YOUTUBE:')[0].trim();
 
-      return cleanText
-          // 1. 구분선 치환
-          .replace(/^---$/gm, '<hr>')
-          // 2. 제목 (###, ####) 치환
-          .replace(/^#{1,6}\s*(.*$)/gim, '<h3 style="color:#ff4d8d; margin-top:16px; margin-bottom:8px; font-weight:800;">$1</h3>')
-          // 3. 굵은 글씨 (**텍스트**) 치환
-          .replace(/\*\*(.*?)\*\*/g, '<strong style="color:#8b5cf6; font-weight:800;">$1</strong>')
-          // 4. 불릿 포인트 (* 항목) 치환
-          .replace(/^\s*\*\s*(.*$)/gim, '<div style="margin-left:8px; margin-bottom:4px;">• $1</div>')
-          // 5. 줄바꿈 처리
-          .replace(/\n/g, '<br>');
+      // 2. 구분선 (---) 제거 및 실선 추가
+      cleanText = cleanText.replace(/^-{3,}$/gm, '<hr style="border:0; border-top:2px dashed #ff99cc; margin:16px 0;">');
+
+      // 3. 제목 (#, ##, ###, ####) 기호 제거 후 소제목 스타일 적용
+      cleanText = cleanText.replace(/^#{1,6}\s*(.*$)/gim, '<div style="font-size:1.1rem; font-weight:800; color:#ff4d8d; margin-top:18px; margin-bottom:8px;">$1</div>');
+
+      // 4. 볼드체 별표 (**) 완전히 제거하고 보라색 강조 처리
+      cleanText = cleanText.replace(/\*\*(.*?)\*\*/g, '<strong style="color:#7928ca; font-weight:800;">$1</strong>');
+
+      // 5. 불릿 포인트 (* 또는 -) 기호 제거 후 깔끔한 동그라미 처리
+      cleanText = cleanText.replace(/^\s*[\*\-]\s*(.*$)/gim, '<div style="margin-left:6px; margin-bottom:4px;">✨ $1</div>');
+
+      // 6. 줄바꿈을 <br>로 변경
+      cleanText = cleanText.replace(/\n/g, '<br>');
+
+      return cleanText;
   }
 
   tabButtons.forEach(btn => {
@@ -88,12 +93,11 @@ document.addEventListener('DOMContentLoaded', () => {
               throw new Error(data.error || '생성에 실패했습니다.');
           }
 
-          // 서버 응답 키인 data.reply를 정확히 매핑
           const rawText = data.reply || data.guide || data.result || data.message || '';
           resultBiasTitle.innerText = `${biasName} 입덕 가이드`;
 
-          // HTML 변환 함수 적용
-          resultContent.innerHTML = formatGuideText(rawText);
+          // innerText가 아니라 innerHTML로 정제된 텍스트 주입
+          resultContent.innerHTML = cleanAndFormatText(rawText);
 
           currentGuide = {
               id: Date.now().toString(),
