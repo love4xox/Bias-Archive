@@ -152,14 +152,22 @@ body {
   display: flex;
   gap: 8px;
   margin-bottom: 24px;
-  overflow-x: hidden;
-  padding-bottom: 4px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 6px;
   width: 100%;
 }
 
+.nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
 .tab-btn {
-  flex: 1;
-  min-width: 130px;
+  flex-shrink: 0;
+  min-width: 120px;
   padding: 12px 14px;
   border: var(--border-thick);
   border-radius: var(--radius-md);
@@ -173,13 +181,7 @@ body {
   justify-content: center;
   gap: 6px;
   transition: all 0.15s ease;
-}
-
-.tab-btn.active {
-  background-color: var(--secondary);
-  color: #fff;
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px var(--border-color);
+  white-space: nowrap;
 }
 
 /* Y2K 카드 공통 */
